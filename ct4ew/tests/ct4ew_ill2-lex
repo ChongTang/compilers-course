@@ -1,0 +1,7 @@
+// This is test case 2, I will test the conditional operator
+
+VAR a;
+VAR b;
+a = 1;
+b = a == 1 ? 1 : 0;
+

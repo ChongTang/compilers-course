@@ -1,0 +1,11 @@
+VAR a;
+VAR b;
+VAR c;
+
+a = 100;
+b = 50;
+c = 1;
+
+JUMP a;
+TURN b;
+GO sin(c);

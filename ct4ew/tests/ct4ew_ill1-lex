@@ -1,0 +1,7 @@
+// This is test case 1
+
+/** Test block comments
+  **/
+VAR a;
+VAR b;
+b = 10;
