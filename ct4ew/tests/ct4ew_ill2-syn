@@ -1,0 +1,15 @@
+VAR myinteger;
+
+myinteger = 1+20;
+myfloat = 1.0;
+
+// cannot use ID in for loop
+i=10;
+FOR i STEP 1 TO 20+1 DO
+BEGIN
+    GO sin(myfloat);
+    JUMP myinteger;
+    tmp = myinteger - 2;
+    TURN 2*tmp*180/2;
+    JUMP tmp+12;
+END
