@@ -25,7 +25,7 @@ program: head decllist stmtlist tail;
 
 head: { printf("%%!PS Adobe\n"
                "\n"
-	       "newpath 0 0 moveto\n"
+	       "newpath\n0 0 moveto\n\n"
 	       );
       };
 
