@@ -1,13 +1,9 @@
 
 %{
 #include "symtab.h"
-#include "token.h"
+#include "turtle.tab.h"
 %}
 
-digit           [0-9]+
-id              [a-zA-Z]+[a-z0-9A-Z]*
-variable        [a-z]+[a-z0-9A-Z]*
-bs              [\ \t]+
 %%
 
 \/\/.*          ;
@@ -24,19 +20,6 @@ DO              return DO;
 BEGIN           return COPEN;
 END             return CCLOSE;
 
-
-IF              return IF;
-FI              return FI;
-THEN            return THEN;
-ELSE            return ELSE;
-WHILE           return WHILE;
-OD              return OD;
-SWITCH          return SWITCH;
-CASE            return CASE;
-PROCEDURE       return PROCEDURE;
-
-
-
 sin             return SIN;
 cos             return COS;
 sqrt            return SQRT;
@@ -50,14 +33,6 @@ sqrt            return SQRT;
 \)              return CLOSE;
 =               return ASSIGN;
 
-
-
-\<              return LESSTHAN;
-\>              return GREATERTHAN;
-\{              return LEFTBRACE;
-\}              return RIGHTBRACE;
-,               return COMMA;
-
 [a-z]+          { yylval.n = lookup(yytext); 
                   if (yylval.n==NULL)
 		    yylval.n = insert(yytext);
@@ -66,6 +41,23 @@ sqrt            return SQRT;
     
 [0-9]+\.[0-9]+  yylval.d = atof(yytext);  return FLOAT;
 [0-9]+          yylval.i = atoi(yytext);  return NUMBER;
+
+
+IF              return IF;
+ELSE            return ELSE;
+WHILE           return WHILE;
+PROCEDURE       return PROCEDURE;
+PARAM           return PARAM;
+CALL	    	return CALL;
+\>=             return GE;
+\<=             return LE;
+==              return EQUAL;
+!=              return NOTEQUAL;
+\<              return LT;
+\>              return GT;
+\{          	return LEFTBRACE;
+\}              return RIGHTBRACE;
+
 
 .               fprintf(stderr,"Unexpected character %c (%2X)\n",yytext[0],yytext[0]);
 
