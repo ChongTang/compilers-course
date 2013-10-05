@@ -54,7 +54,7 @@ stmt: WHILE {printf("{ ");}
      OPEN cond CLOSE LEFTBRACE {printf("{} {exit} ifelse\n");}
      stmtlist RIGHTBRACE {printf("} loop\n");};
 
-stmt: PROCEDURE ID LEFTBRACE {printf("\/proc%s {",$2->symbol);}
+stmt: PROCEDURE ID LEFTBRACE {printf("/proc%s {",$2->symbol);}
      stmtlist RIGHTBRACE {printf("} def\n");};
 
 stmt: ID ASSIGN expr SEMICOLON {printf("/tlt%s exch store\n",$1->symbol);} ;

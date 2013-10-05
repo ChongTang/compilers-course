@@ -1,0 +1,25 @@
+VAR a;
+VAR b;
+a=0;
+b=0;
+
+// break the number of parameter
+PROCEDURE myproc {
+JUMP a;
+GO 40;
+TURN PARAM;
+GO 40;
+TURN PARAM;
+GO 40;
+TURN PARAM;
+GO 40;
+TURN PARAM;
+}
+
+CALL myproc;
+
+
+// break initialization
+JUMP b;
+// break divid 0
+TURN 40/0;
