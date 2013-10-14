@@ -1,0 +1,59 @@
+VAR start;
+VAR end;
+
+
+PROCEDURE circle{
+    i=0;
+    WHILE(i<360){
+        TURN 1;
+        GO 1.5;
+        i=i+1;
+    }
+}
+
+
+PROCEDURE square{
+    GO 200;
+    TURN 90;
+    GO 200;
+    TURN 90;
+    GO 200;
+    TURN 90;
+    GO 200;
+}
+
+PROCEDURE triangle{
+    GO 150;
+    TURN 120;
+    GO 150;
+    TURN 120;
+    GO 150;
+}
+
+
+PROCEDURE diamond{
+    GO 150;
+    TURN PARAM;
+    GO 150;
+    TURN PARAM;
+    GO 150;
+    TURN PARAM;
+    GO 150;
+    TURN PARAM;
+}
+
+JUMP 250;
+TURN 90;
+JUMP 100;
+CALL square;
+
+JUMP 150;
+CALL circle;
+
+TURN 60;
+JUMP 250;
+CALL triangle;
+
+TURN 200;
+JUMP 200;
+CALL diamond 60 120 60 120;

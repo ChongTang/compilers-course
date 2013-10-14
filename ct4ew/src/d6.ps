@@ -1,0 +1,52 @@
+%!PS Adobe
+
+newpath
+0 0 moveto
+
+/tltstart 0 def
+/tltend 0 def
+/proccircle {0 /tlti exch store
+{ tlti 360 lt
+{} {exit} ifelse
+1 rotate
+1.500000 0 rlineto
+tlti 1 add /tlti exch store
+} loop
+} def
+/procsquare {200 0 rlineto
+90 rotate
+200 0 rlineto
+90 rotate
+200 0 rlineto
+90 rotate
+200 0 rlineto
+} def
+/proctriangle {150 0 rlineto
+120 rotate
+150 0 rlineto
+120 rotate
+150 0 rlineto
+} def
+/procdiamond {150 0 rlineto
+rotate
+150 0 rlineto
+rotate
+150 0 rlineto
+rotate
+150 0 rlineto
+rotate
+} def
+250 0 rmoveto
+90 rotate
+100 0 rmoveto
+procsquare
+150 0 rmoveto
+proccircle
+60 rotate
+250 0 rmoveto
+proctriangle
+200 rotate
+200 0 rmoveto
+60 120 60 120 procdiamond
+closepath
+stroke
