@@ -105,6 +105,7 @@ class CompoundExpr : public Expr
   public:
     CompoundExpr(Expr *lhs, Operator *op, Expr *rhs); // for binary
     CompoundExpr(Operator *op, Expr *rhs);             // for unary
+    CompoundExpr(Expr *lhs, Operator *op);             // for unary
     void PrintChildren(int indentLevel);
 };
 
@@ -112,9 +113,11 @@ class ArithmeticExpr : public CompoundExpr
 {
   public:
     ArithmeticExpr(Expr *lhs, Operator *op, Expr *rhs) : CompoundExpr(lhs,op,rhs) {}
-    ArithmeticExpr(Operator *op, Expr *rhs) : CompoundExpr(op,rhs) {}
+    ArithmeticExpr(Operator *op, Expr *rhs) : CompoundExpr(op, rhs) {}
     const char *GetPrintNameForNode() { return "ArithmeticExpr"; }
 };
+
+
 
 class RelationalExpr : public CompoundExpr 
 {
@@ -144,6 +147,14 @@ class AssignExpr : public CompoundExpr
     AssignExpr(Expr *lhs, Operator *op, Expr *rhs) : CompoundExpr(lhs,op,rhs) {}
     const char *GetPrintNameForNode() { return "AssignExpr"; }
 };
+
+class PostfixExpr : public CompoundExpr
+{
+  public:
+    PostfixExpr(Expr *lhs, Operator *op) : CompoundExpr(lhs,op) {}
+    const char *GetPrintNameForNode() { return "PostfixExpr"; }
+};
+
 
 class LValue : public Expr 
 {
@@ -198,6 +209,7 @@ class Call : public Expr
     List<Expr*> *actuals;
     
   public:
+    Call() : Expr(), base(NULL), field(NULL), actuals(NULL) {}
     Call(yyltype loc, Expr *base, Identifier *field, List<Expr*> *args);
     const char *GetPrintNameForNode() { return "Call"; }
     void PrintChildren(int indentLevel);

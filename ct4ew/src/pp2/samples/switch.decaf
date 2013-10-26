@@ -10,7 +10,7 @@ void small() {
 	n = ReadInteger();
 
 	switch (n) {
-		case 1: Print("Ace"); break;
+        case 1: Print("Ace"); break;
 		case 11: Print("Jack"); break;
 		case 12: Print("Queen"); break;
 		case 13: Print("King"); break;

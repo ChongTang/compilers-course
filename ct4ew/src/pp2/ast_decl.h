@@ -23,6 +23,7 @@ class Decl : public Node
     Identifier *id;
   
   public:
+    Decl() : id(NULL) {}
     Decl(Identifier *name);
 };
 
@@ -32,6 +33,7 @@ class VarDecl : public Decl
     Type *type;
     
   public:
+    VarDecl() : type(NULL) {}
     VarDecl(Identifier *name, Type *type);
     const char *GetPrintNameForNode() { return "VarDecl"; }
     void PrintChildren(int indentLevel);
@@ -70,6 +72,7 @@ class FnDecl : public Decl
     Stmt *body;
     
   public:
+    FnDecl() : Decl(), formals(NULL), returnType(NULL), body(NULL) {}
     FnDecl(Identifier *name, Type *returnType, List<VarDecl*> *formals);
     void SetFunctionBody(Stmt *b);
     const char *GetPrintNameForNode() { return "FnDecl"; }
