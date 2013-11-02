@@ -402,7 +402,8 @@ SwitchStmt :   T_Switch '(' Expr ')' '{' CaseP DefaultO '}' {
                                     }
           ;
 
-Expr      :    LValue '=' Expr      { Operator *op = new Operator(@2, "=");
+Expr      :    
+               LValue '=' Expr      { Operator *op = new Operator(@2, "=");
                                       $$ = new AssignExpr($1, op, $3);
                                     }
           |    Constant             { $$ = $1; }
@@ -410,6 +411,12 @@ Expr      :    LValue '=' Expr      { Operator *op = new Operator(@2, "=");
           |    T_This               { $$ = new This(@1); }
           |    Call                 { $$ = $1; }
           |    '(' Expr ')'         { $$ = $2; }
+          |    Expr T_PostfixAdd     { Operator *op = new Operator(@2, "++");
+                                      $$ = new PostfixExpr($1, op);
+                                    }
+          |    Expr T_PostfixMinus     { Operator *op = new Operator(@2, "--");
+                                      $$ = new PostfixExpr($1, op);
+                                    }
           |    Expr '+' Expr        { Operator *op = new Operator(@2, "+");
                                       $$ = new ArithmeticExpr($1, op, $3);
                                     }
@@ -460,12 +467,6 @@ Expr      :    LValue '=' Expr      { Operator *op = new Operator(@2, "=");
                                     }
           |    '!' Expr             { Operator *op = new Operator(@1, "!");
                                       $$ = new LogicalExpr(op, $2);
-                                    }
-          |    Expr T_PostfixAdd     { Operator *op = new Operator(@2, "++");
-                                      $$ = new PostfixExpr($1, op);
-                                    }
-          |    Expr T_PostfixMinus     { Operator *op = new Operator(@2, "--");
-                                      $$ = new PostfixExpr($1, op);
                                     }
           |    T_ReadInteger '(' ')'   
 				    { $$ = new ReadIntegerExpr(@1); }
