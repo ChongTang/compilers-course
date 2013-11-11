@@ -1,12 +1,42 @@
 
-*** Error line 1.
-int Oops(int x, int x) {
-                    ^
-*** Declaration of 'x' here conflicts with declaration on line 1
+*** Error line 2.
+   void Meet() { FindTime(); }
+                 ^^^^^^^^
+*** No declaration found for function 'FindTime'
 
 
-*** Error line 5.
-    void Winky(int a, double b, int[] a) {
-                                      ^
-*** Declaration of 'a' here conflicts with declaration on line 5
+*** Error line 7.
+   nico = trish + katie;
+   ^^^^
+*** No declaration found for variable 'nico'
+
+
+*** Error line 7.
+   nico = trish + katie;
+          ^^^^^
+*** No declaration found for variable 'trish'
+
+
+*** Error line 7.
+   nico = trish + katie;
+                  ^^^^^
+*** No declaration found for variable 'katie'
+
+
+*** Error line 8.
+   cheryl();
+   ^^^^^^
+*** No declaration found for function 'cheryl'
+
+
+*** Error line 9.
+   tbc.Meeting(caroline);
+               ^^^^^^^^
+*** No declaration found for variable 'caroline'
+
+
+*** Error line 9.
+   tbc.Meeting(caroline);
+       ^^^^^^^
+*** Club has no such field 'Meeting'
 
