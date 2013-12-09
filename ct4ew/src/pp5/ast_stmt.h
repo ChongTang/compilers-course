@@ -5,7 +5,7 @@
  * language (for, if, return, etc.) there is a corresponding
  * node class for that construct.
  *
- * pp4: You will need to extend the Stmt classes to implement
+ * pp5: You will need to extend the Stmt classes to implement
  * code generation for statements.
  */
 

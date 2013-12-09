@@ -20,7 +20,7 @@
  * set up links in both directions. The parent link is typically not used
  * during parsing, but is more important in later phases.
  *
- * Code generation: For pp4 you are adding "Emit" behavior to the ast
+ * Code generation: For pp5 you are adding "Emit" behavior to the ast
  * node classes. Your code generator should do an postorder walk on the
  * parse tree, and when visiting each node, emitting the necessary
  * instructions for that construct.

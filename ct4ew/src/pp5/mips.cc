@@ -10,70 +10,20 @@
  * It uses simplistic algorithms, in particular, its register handling
  * and spilling strategy is inefficient to the point of begin mocked
  * by elementary school children.
+ *
+ * Dan Bentley, April 2002
+ * A simpler final code generator to translate Tac to MIPS.
+ * It uses algorithms without loops or conditionals, to make there be a
+ * very clear and obvious translation between one and the other.
+ * Specifically, it always loads operands off stacks, and stores the
+ * result back.  This breaks bad code immediately, theoretically helping
+ * students.
  */
 
 #include "mips.h"
 #include <stdarg.h>
-#include <string.h>
+#include <cstring>
 
-/* Method: GetRegister
- * -------------------
- * Given a location for a current var, a reason (ForRead or ForWrite)
- * and up to two registers to avoid, this method will assign
- * to a var to register trying these alternatives in order:
- *  1) if that var is already in a register ("same" is determined
- *     by matching name and same scope), we use that one
- *  2) find an empty register to use for the var
- *  3) find an in-use register that is not dirty.  We don't need
- *     to write value back to memory since it's clean, so we just
- *     replace with the new var
- *  4) spill an in-use, dirty register, by writing its contents to
- *     memory and then replace with the new var
- * For steps 3 & 4, we respect the registers given to avoid (ie the
- * other operands in this operation). The register descriptors are
- * updated to show the new state of the world. If for read, we
- * load the current value from memory into the register. If for
- * write, we mark the register as dirty (since it is getting a
- * new value).
- */
-Mips::Register Mips::GetRegister(Location *var, Reason reason,
-					   Register avoid1, Register avoid2)
-{
-  Register reg;
-
-  if (!FindRegisterWithContents(var, reg)) {
-    if (!FindRegisterWithContents(NULL, reg)) { 
-	reg = SelectRegisterToSpill(avoid1, avoid2);
-	SpillRegister(reg);
-    }
-    regs[reg].var = var;
-    if (reason == ForRead) {                 // load current value
-	Assert(var->GetOffset() % 4 == 0); // all variables are 4 bytes
-	const char *offsetFromWhere = var->GetSegment() == fpRelative? regs[fp].name : regs[gp].name;
-	Emit("lw %s, %d(%s)\t# load %s from %s%+d into %s", regs[reg].name,
-	     var->GetOffset(), offsetFromWhere, var->GetName(),
-	     offsetFromWhere, var->GetOffset(), regs[reg].name);
-	regs[reg].isDirty = false;
-    }
-  }
-  if (reason == ForWrite)
-    regs[reg].isDirty = true;
-  return reg;
-}
-
-
-// Two covers for the above method to make it slightly more
-// convenient to call it
-Mips::Register Mips::GetRegister(Location *var, Register avoid1)
-{
-  return GetRegister(var, ForRead, avoid1, zero);
-}
-
-Mips::Register Mips::GetRegisterForWrite(Location *var, Register avoid1,
-						     Register avoid2)
-{
-  return GetRegister(var, ForWrite, avoid1, avoid2);
-} 
 
 
 // Helper to check if two variable locations are one and the same
@@ -88,105 +38,34 @@ static bool LocationsAreSame(Location *var1, Location *var2)
 }
 
 
-/* Method: FindRegisterWithContents
- * --------------------------------
- * Searches the descriptors for one with contents var. Assigns
- * register by reference, and returns true/false on whether match found.
- */
-bool Mips::FindRegisterWithContents(Location *var, Register& reg)
-{
-  for (reg = zero; reg < NumRegs; reg = Register(reg+1))
-    if (regs[reg].isGeneralPurpose && LocationsAreSame(var, regs[reg].var))
-	return true;
-  return false;
-}
-
-
-/* Method: SelectRegisterToSpill
- * -----------------------------
- * Chooses an in-use register to replace with a new variable. We
- * prefer to replace a non-dirty once since we would not have to
- * write its contents back to memory, so the first loop searches
- * for a clean one. If none found, we take a dirty one.  In both
- * loops we deliberately won't choose either of the registers we
- * were asked to avoid.  We track the last dirty register spilled
- * and advance on each subsequent spill as a primitive means of
- * trying to not throw out things we just loaded and thus are likely
- * to need.
- */
-Mips::Register Mips::SelectRegisterToSpill(Register avoid1, Register avoid2)
-{
-            // first hunt for a non-dirty one, since no work to spill
-  for (Register i = zero; i < NumRegs; i = (Register)(i+1)) {
-    if (i != avoid1 && i != avoid2 && regs[i].isGeneralPurpose &&
-	  !regs[i].isDirty)
-	return i;
-  }
-  do {      // otherwise just pick the next usuable register
-    lastUsed = (Register)((lastUsed + 1) % NumRegs);
-  } while (lastUsed == avoid1 || lastUsed == avoid2 ||
-           !regs[lastUsed].isGeneralPurpose);
-  return lastUsed;
-}
-
-
 /* Method: SpillRegister
  * ---------------------
- * "Empties" register.  If variable is currently slaved in this register
- * and its contents are out of synch with memory (isDirty), we write back
- * the current contents to memory. We then clear the descriptor so we
- * realize the register is empty.
+ * Used to spill a register from reg to dst.  All it does is emit a store
+ * from that register to its location on the stack.
  */
-void Mips::SpillRegister(Register reg)
+void Mips::SpillRegister(Location *dst, Register reg)
 {
-  Location *var = regs[reg].var;
-  if (var && regs[reg].isDirty) {
-    const char *offsetFromWhere = var->GetSegment() == fpRelative? regs[fp].name : regs[gp].name;
-    Assert(var->GetOffset() % 4 == 0); // all variables are 4 bytes in size
-    Emit("sw %s, %d(%s)\t# spill %s from %s to %s%+d", regs[reg].name,
-	   var->GetOffset(), offsetFromWhere, var->GetName(), regs[reg].name,
-	   offsetFromWhere,var->GetOffset());
-  }
-  regs[reg].var = NULL;
-}       
-
-
-/* Method: SpillAllDirtyRegisters
- * ------------------------------
- * Used before flow of control change (branch, label, jump, etc.) to
- * save contents of all dirty registers. This synchs the contents of
- * the registers with the memory locations for the variables.
- */
-void Mips::SpillAllDirtyRegisters()
-{
-  Register i;
-  for (i = zero; i < NumRegs; i = Register(i+1)) 
-    if (regs[i].var && regs[i].isDirty) break;
-  if (i != NumRegs) // none are dirty, don't print message to avoid confusion
-    Emit("# (save modified registers before flow of control change)");
-  for (i = zero; i < NumRegs; i = Register(i+1)) 
-    SpillRegister(i);
+  Assert(dst);
+  const char *offsetFromWhere = dst->GetSegment() == fpRelative? regs[fp].name : regs[gp].name;
+  Assert(dst->GetOffset() % 4 == 0); // all variables are 4 bytes in size
+  Emit("sw %s, %d(%s)\t# spill %s from %s to %s%+d", regs[reg].name,
+       dst->GetOffset(), offsetFromWhere, dst->GetName(), regs[reg].name,
+       offsetFromWhere,dst->GetOffset());
 }
 
-
-/* Method: SpillForEndFunction
- * ---------------------------
- * Slight optimization on the above method used when spilling for
- * end of function (return/fall off). In such a case, we do not
- * need to save values for locals, temps, and parameters because the
- * function is about to exit and those variables are going away
- * immediately, so no need to bother with updating contents.
+/* Method: FillRegister
+ * --------------------
+ * Fill a register from location src into reg.
+ * Simply load a word into a register.
  */
-void Mips::SpillForEndFunction()
+void Mips::FillRegister(Location *src, Register reg)
 {
-  for (Register i = zero; i < NumRegs; i = Register(i+1)) {
-    if (regs[i].isGeneralPurpose && regs[i].var) {
-	if (regs[i].var->GetSegment() == gpRelative)
-	  SpillRegister(i);
-	else  // all stack variables can just be tossed at end func
-	  regs[i].var = NULL;
-    }
-  }
+  Assert(src);
+  const char *offsetFromWhere = src->GetSegment() == fpRelative? regs[fp].name : regs[gp].name;
+  Assert(src->GetOffset() % 4 == 0); // all variables are 4 bytes in size
+  Emit("lw %s, %d(%s)\t# fill %s to %s from %s%+d", regs[reg].name,
+       src->GetOffset(), offsetFromWhere, src->GetName(), regs[reg].name,
+       offsetFromWhere,src->GetOffset());
 }
 
 
@@ -220,9 +99,10 @@ void Mips::Emit(const char *fmt, ...)
  */
 void Mips::EmitLoadConstant(Location *dst, int val)
 {
-  Register reg = GetRegisterForWrite(dst);
-  Emit("li %s, %d\t\t# load constant value %d into %s", regs[reg].name,
-	 val, val, regs[reg].name);
+  Register r = rd; 
+  Emit("li %s, %d\t\t# load constant value %d into %s", regs[r].name,
+	 val, val, regs[r].name);
+  SpillRegister(dst, rd);
 }
 
 /* Method: EmitLoadStringConstant
@@ -251,8 +131,8 @@ void Mips::EmitLoadStringConstant(Location *dst, const char *str)
  */
 void Mips::EmitLoadLabel(Location *dst, const char *label)
 {
-  Register reg = GetRegisterForWrite(dst);
-  Emit("la %s, %s\t# load label", regs[reg].name, label);
+  Emit("la %s, %s\t# load label", regs[rd].name, label);
+  SpillRegister(dst, rd);
 }
  
 
@@ -264,9 +144,8 @@ void Mips::EmitLoadLabel(Location *dst, const char *label)
  */
 void Mips::EmitCopy(Location *dst, Location *src)
 {
-  Register rSrc = GetRegister(src), rDst = GetRegisterForWrite(dst, rSrc);
-  Emit("move %s, %s\t\t# copy value", regs[rDst].name, regs[rSrc].name);
-
+  FillRegister(src, rd);
+  SpillRegister(dst, rd);
 }
 
 
@@ -280,9 +159,10 @@ void Mips::EmitCopy(Location *dst, Location *src)
  */
 void Mips::EmitLoad(Location *dst, Location *reference, int offset)
 {
-  Register rSrc = GetRegister(reference), rDst = GetRegisterForWrite(dst, rSrc);
-  Emit("lw %s, %d(%s) \t# load with offset", regs[rDst].name,
-	 offset, regs[rSrc].name);
+  FillRegister(reference, rs);
+  Emit("lw %s, %d(%s) \t# load with offset", regs[rd].name,
+	 offset, regs[rs].name);
+  SpillRegister(dst, rd);
 }
 
 
@@ -296,9 +176,10 @@ void Mips::EmitLoad(Location *dst, Location *reference, int offset)
  */
 void Mips::EmitStore(Location *reference, Location *value, int offset)
 {
-  Register rVal = GetRegister(value), rRef = GetRegister(reference, rVal);
+  FillRegister(value, rs);
+  FillRegister(reference, rd);
   Emit("sw %s, %d(%s) \t# store with offset",
-	 regs[rVal].name, offset, regs[rRef].name);
+	 regs[rs].name, offset, regs[rd].name);
 }
 
 
@@ -313,11 +194,11 @@ void Mips::EmitStore(Location *reference, Location *value, int offset)
 void Mips::EmitBinaryOp(BinaryOp::OpCode code, Location *dst, 
 				 Location *op1, Location *op2)
 {
-  Register rLeft = GetRegister(op1), rRight = GetRegister(op2, rLeft);
-  Register rDst = GetRegisterForWrite(dst, rLeft, rRight);
-  Emit("%s %s, %s, %s\t", NameForTac(code), regs[rDst].name,
-	 regs[rLeft].name, regs[rRight].name);
-
+  FillRegister(op1, rs);
+  FillRegister(op2, rt);
+  Emit("%s %s, %s, %s\t", NameForTac(code), regs[rd].name,
+	 regs[rs].name, regs[rt].name);
+  SpillRegister(dst, rd);
 }
 
 
@@ -329,8 +210,8 @@ void Mips::EmitBinaryOp(BinaryOp::OpCode code, Location *dst,
  * wipe the slate clean.
  */
 void Mips::EmitLabel(const char *label)
-{ 
-  SpillAllDirtyRegisters(); 
+{
+ 
   Emit("%s:", label);
 }
 
@@ -344,7 +225,7 @@ void Mips::EmitLabel(const char *label)
  */
 void Mips::EmitGoto(const char *label)
 {
-  SpillAllDirtyRegisters(); 
+ 
   Emit("b %s\t\t# unconditional branch", label);
 }
 
@@ -357,10 +238,9 @@ void Mips::EmitGoto(const char *label)
  * all registers here.
  */
 void Mips::EmitIfZ(Location *test, const char *label)
-{ 
-  Register testReg = GetRegister(test);
-  SpillAllDirtyRegisters();
-  Emit("beqz %s, %s\t# branch if %s is zero ", regs[testReg].name, label,
+{
+  FillRegister(test, rs);
+  Emit("beqz %s, %s\t# branch if %s is zero ", regs[rs].name, label,
 	 test->GetName());
 }
 
@@ -375,8 +255,8 @@ void Mips::EmitIfZ(Location *test, const char *label)
 void Mips::EmitParam(Location *arg)
 { 
   Emit("subu $sp, $sp, 4\t# decrement sp to make space for param");
-  Register reg = GetRegister(arg);
-  Emit("sw %s, 4($sp)\t# copy param value to stack", regs[reg].name);
+  FillRegister(arg, rs);
+  Emit("sw %s, 4($sp)\t# copy param value to stack", regs[rs].name);
 }
 
 
@@ -393,11 +273,11 @@ void Mips::EmitParam(Location *arg)
  */
 void Mips::EmitCallInstr(Location *result, const char *fn, bool isLabel)
 {
-  SpillAllDirtyRegisters();
   Emit("%s %-15s\t# jump to function", isLabel? "jal": "jalr", fn);
   if (result != NULL) {
-    Register r1 = GetRegisterForWrite(result);
-    Emit("move %s, %s\t\t# copy function return value from $v0", regs[r1].name, regs[v0].name);
+    Emit("move %s, %s\t\t# copy function return value from $v0",
+    regs[rd].name, regs[v0].name);
+    SpillRegister(result, rd);
   }
 }
 
@@ -410,7 +290,8 @@ void Mips::EmitLCall(Location *dst, const char *label)
 
 void Mips::EmitACall(Location *dst, Location *fn)
 {
-  EmitCallInstr(dst, regs[GetRegister(fn)].name, false);
+  FillRegister(fn, rs);
+  EmitCallInstr(dst, regs[rs].name, false);
 }
 
 /*
@@ -442,9 +323,11 @@ void Mips::EmitPopParams(int bytes)
  void Mips::EmitReturn(Location *returnVal)
 { 
   if (returnVal != NULL) 
-    Emit("move $v0, %s\t\t# assign return value into $v0",
-	   regs[GetRegister(returnVal)].name);
-  SpillForEndFunction();
+    {
+      FillRegister(returnVal, rd);
+      Emit("move $v0, %s\t\t# assign return value into $v0",
+	   regs[rd].name);
+    }
   Emit("move $sp, $fp\t\t# pop callee frame off stack");
   Emit("lw $ra, -4($fp)\t# restore saved ra");
   Emit("lw $fp, 0($fp)\t# restore saved fp");
@@ -581,7 +464,8 @@ Mips::Mips() {
   regs[s5] = (RegContents){false, NULL, "$s5", true};
   regs[s6] = (RegContents){false, NULL, "$s6", true};
   regs[s7] = (RegContents){false, NULL, "$s7", true};
-  lastUsed = zero;
+  rs = t0; rt = t1; rd = t2;
+
 }
 const char *Mips::mipsName[BinaryOp::NumOps];
 

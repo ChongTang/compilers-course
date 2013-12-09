@@ -5,7 +5,7 @@
  * specialized for declarations of variables, functions, classes,
  * and interfaces.
  *
- * pp4: You will need to extend the Decl classes to implement
+ * pp5: You will need to extend the Decl classes to implement
  * code generation for declarations.
  */
 

@@ -5,7 +5,7 @@
  * instructions in a sequential list, ready for further processing or
  * translation to MIPS as part of final code generation.
  *
- *    pp4:  The class as given supports the basic Tac instructions,
+ *    pp5:  The class as given supports the basic Tac instructions,
  *          you will need to extend it to handle the more complex
  *          operations (accessing instance variables, dynamic method
  *          dispatch, array length(), etc.)

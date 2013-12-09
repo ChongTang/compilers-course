@@ -41,7 +41,7 @@ Program::Program(List<Decl*> *d) : codeGenerator(new CodeGenerator) {
 
 void Program::Check() {
     /* You can use your pp3 semantic analysis or leave it out if
-     * you want to avoid the clutter.  We won't test pp4 against
+     * you want to avoid the clutter.  We won't test pp5 against
      * semantically-invalid programs.
      */
     for (int i = 0, n = decls->NumElements(); i < n; ++i)
@@ -56,7 +56,7 @@ void Program::Check() {
 }
 
 void Program::Emit() {
-    /* pp4: here is where the code generation is kicked off.
+    /* pp5: here is where the code generation is kicked off.
      *      The general idea is perform a tree traversal of the
      *      entire program, generating instructions as you go.
      *      Each node can have its own way of translating itself,
@@ -298,7 +298,7 @@ Location* PrintStmt::Emit(CodeGenerator *cg) {
         Expr *e = args->Nth(i);
         BuiltIn b = e->GetType()->GetPrint();
         /* Print can only take ints, bools, or strings as parameters
-         * (remember, doubles need not be supported for PP4). GetPrint()
+         * (remember, doubles need not be supported for PP5). GetPrint()
          * should only return NumBuiltIns if the type is not an int, bool,
          * or string. This should never happen.
          */

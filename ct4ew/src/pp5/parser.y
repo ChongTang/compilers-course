@@ -2,7 +2,7 @@
  * --------------
  * Bison input file to generate the parser for the compiler.
  *
- * pp4: add parser rules and tree construction from your past projects. 
+ * pp5: add parser rules and tree construction from your past projects. 
  *      You should not need to make any significant changes in the parser itself. 
  *      After parsing completes, if no errors were found, the parser calls
  *      program->Emit() to kick off the code generation pass. The

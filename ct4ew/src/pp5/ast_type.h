@@ -5,7 +5,7 @@
  * for built-in types, the NamedType for classes and interfaces,
  * and the ArrayType for arrays of other types.
  *
- * pp4: You will need to extend the Type classes to implement
+ * pp5: You will need to extend the Type classes to implement
  * code generation for types.
  */
 
