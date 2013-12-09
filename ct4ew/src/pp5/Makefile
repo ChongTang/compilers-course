@@ -1,5 +1,5 @@
 ## 
-## Simple makefile for CS143 programming projects
+## Simple makefile for decaf programming projects
 ##
 
 .PHONY: clean strip
